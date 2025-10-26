@@ -24,7 +24,7 @@ async def create_room(request: CreateRoomRequest, db: Session = Depends(get_db))
     room_id = str(uuid.uuid4())
     passphrase_hash = bcrypt.hash(request.passphrase)
     
-    # Store in memory
+    # DualStorage handles both memory and database storage
     room_data = {
         "id": room_id,
         "name": request.roomName,
@@ -33,18 +33,6 @@ async def create_room(request: CreateRoomRequest, db: Session = Depends(get_db))
         "storage_mode": request.storageMode
     }
     memory_storage.create_room(room_id, room_data)
-    
-    # If persistent mode, also store in database
-    if request.storageMode == "persistent":
-        db_room = Room(
-            id=room_id,
-            name=request.roomName,
-            passphrase_hash=passphrase_hash,
-            created_by=request.createdBy,
-            storage_mode=StorageMode.PERSISTENT
-        )
-        db.add(db_room)
-        db.commit()
     
     return {"roomId": room_id, "roomName": request.roomName}
 

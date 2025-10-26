@@ -35,6 +35,7 @@ class Message(Base):
     ttl_seconds = Column(Integer, nullable=True)  # Self-destruct timer
     signature = Column(Text, nullable=True)  # Digital signature for verification
     public_key = Column(Text, nullable=True)  # Sender's public key
+    verified = Column(Boolean, default=False)  # Server-side signature verification result
     
     room = relationship("Room", back_populates="messages")
 

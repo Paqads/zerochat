@@ -3,6 +3,10 @@ from passlib.hash import bcrypt
 from app.storage import memory_storage
 from datetime import datetime
 import asyncio
+import base64
+from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PublicKey
+from cryptography.hazmat.primitives import serialization
+from cryptography.exceptions import InvalidSignature
 
 sio = socketio.AsyncServer(async_mode='asgi', cors_allowed_origins='*')
 
@@ -47,8 +51,20 @@ async def join_room(sid, data):
         return
     
     existing_users = memory_storage.get_users_by_room(room_id)
+    
+    # Enforce username uniqueness
     if any(u['username'] == username and u['id'] != user_id for u in existing_users):
         await sio.emit('error', {'message': 'Username already taken in this room'}, room=sid)
+        return
+    
+    # CRITICAL: Enforce userId uniqueness to prevent public key overwrite attacks
+    existing_user_with_same_id = memory_storage.get_user(user_id)
+    if existing_user_with_same_id:
+        # REJECT duplicate userId to prevent identity hijacking
+        await sio.emit('error', {
+            'message': 'User ID already in use. Please refresh and try again.',
+            'fatal': True
+        }, room=sid)
         return
     
     user_data = {
@@ -86,7 +102,28 @@ async def send_message(sid, data):
     content = data.get('content')
     ttl_seconds = data.get('ttl')
     signature = data.get('signature')
-    public_key = data.get('publicKey')
+    
+    # Get user's stored public key (from join time) to prevent spoofing
+    user = memory_storage.get_user(user_id)
+    if not user:
+        await sio.emit('error', {
+            'message': 'User not found in room',
+            'fatal': False
+        }, room=sid)
+        return
+    
+    stored_public_key = user.get('public_key')
+    
+    # Verify digital signature server-side using STORED public key
+    verified = False
+    if signature and stored_public_key and content:
+        verified = verify_ed25519_signature(content, signature, stored_public_key)
+        if not verified:
+            await sio.emit('error', {
+                'message': 'Message signature verification failed - message rejected',
+                'fatal': False
+            }, room=sid)
+            return
     
     message = {
         'id': data.get('id', str(asyncio.get_event_loop().time())),
@@ -98,7 +135,8 @@ async def send_message(sid, data):
         'isSystem': False,
         'ttl': ttl_seconds,
         'signature': signature,
-        'publicKey': public_key
+        'publicKey': stored_public_key,  # Use stored key, not client-provided
+        'verified': verified
     }
     
     memory_storage.add_message(room_id, message)
@@ -166,6 +204,27 @@ async def share_file(sid, data):
     file_size = data.get('fileSize')
     signature = data.get('signature')
     
+    # Get user's stored public key to prevent spoofing
+    user = memory_storage.get_user(user_id)
+    if not user:
+        await sio.emit('error', {
+            'message': 'User not found in room',
+            'fatal': False
+        }, room=sid)
+        return
+    
+    stored_public_key = user.get('public_key')
+    
+    # Verify file signature server-side using STORED public key
+    if signature and encrypted_data and stored_public_key:
+        verified = verify_ed25519_signature(encrypted_data, signature, stored_public_key)
+        if not verified:
+            await sio.emit('error', {
+                'message': 'File signature verification failed - file rejected',
+                'fatal': False
+            }, room=sid)
+            return
+    
     file_share = {
         'id': str(asyncio.get_event_loop().time()),
         'roomId': room_id,
@@ -218,3 +277,22 @@ def get_sid_for_user(user_id: str):
         if data.get('user_id') == user_id:
             return sid
     return None
+
+def verify_ed25519_signature(message: str, signature_b64: str, public_key_b64: str) -> bool:
+    """Verify Ed25519 digital signature server-side."""
+    try:
+        # Decode base64 public key and signature
+        public_key_bytes = base64.b64decode(public_key_b64)
+        signature_bytes = base64.b64decode(signature_b64)
+        
+        # Import the public key (SPKI format)
+        public_key = serialization.load_der_public_key(public_key_bytes)
+        
+        # Verify signature
+        message_bytes = message.encode('utf-8')
+        public_key.verify(signature_bytes, message_bytes)
+        
+        return True
+    except (InvalidSignature, Exception) as e:
+        print(f"[WS] Signature verification failed: {e}")
+        return False
