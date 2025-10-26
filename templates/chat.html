@@ -217,42 +217,42 @@
     <!-- Left Sidebar - Room Info -->
     <div class="sidebar">
         <h3 style="color: var(--accent-green); margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem;">
-            <span class="status-dot status-connected pulse" id="connection-indicator"></span>
-            <span id="connection-status">CONNECTED</span>
+            <span class="status-dot status-connected pulse" id="connection-indicator" data-testid="indicator-connection"></span>
+            <span id="connection-status" data-testid="text-connection-status">CONNECTED</span>
         </h3>
         
         <div style="margin-bottom: 1.5rem;">
             <div class="label">Room ID</div>
             <div style="display: flex; gap: 0.5rem;">
-                <input type="text" id="room-id-display" class="input" readonly style="margin-bottom: 0; font-size: 0.75rem;">
-                <button class="btn btn-secondary" onclick="copyRoomId()" style="padding: 0.5rem;">📋</button>
+                <input type="text" id="room-id-display" class="input" readonly style="margin-bottom: 0; font-size: 0.75rem;" data-testid="text-room-id">
+                <button class="btn btn-secondary" onclick="copyRoomId()" style="padding: 0.5rem;" data-testid="button-copy-room-id">📋</button>
             </div>
         </div>
         
         <div style="margin-bottom: 1.5rem;">
             <div class="label">Passphrase</div>
             <div style="display: flex; gap: 0.5rem;">
-                <input type="password" id="passphrase-display" class="input" readonly style="margin-bottom: 0; font-size: 0.75rem;">
-                <button class="btn btn-secondary" onclick="copyPassphrase()" style="padding: 0.5rem;">📋</button>
+                <input type="password" id="passphrase-display" class="input" readonly style="margin-bottom: 0; font-size: 0.75rem;" data-testid="text-passphrase">
+                <button class="btn btn-secondary" onclick="copyPassphrase()" style="padding: 0.5rem;" data-testid="button-copy-passphrase">📋</button>
             </div>
         </div>
         
         <div style="margin-bottom: 1.5rem;" id="admin-controls">
-            <button class="btn btn-danger" style="width: 100%;" onclick="showPassphraseModal()">
+            <button class="btn btn-danger" style="width: 100%;" onclick="showPassphraseModal()" data-testid="button-change-passphrase">
                 🔑 CHANGE PASSPHRASE
             </button>
         </div>
         
         <div style="margin-bottom: 1.5rem;">
             <div class="label">My Fingerprint</div>
-            <div style="font-size: 0.75rem; font-family: monospace; color: var(--accent-cyan); word-break: break-all;" id="my-fingerprint">
+            <div style="font-size: 0.75rem; font-family: monospace; color: var(--accent-cyan); word-break: break-all;" id="my-fingerprint" data-testid="text-fingerprint">
                 Generating...
             </div>
         </div>
         
         <div>
             <div class="label">Storage Mode</div>
-            <span class="badge badge-info" id="storage-mode-badge">EPHEMERAL</span>
+            <span class="badge badge-info" id="storage-mode-badge" data-testid="text-storage-mode">EPHEMERAL</span>
         </div>
     </div>
     
@@ -260,15 +260,15 @@
     <div class="chat-main">
         <div class="chat-header">
             <div>
-                <h2 style="color: var(--accent-green); font-size: 1.25rem;" id="room-name">Loading...</h2>
+                <h2 style="color: var(--accent-green); font-size: 1.25rem;" id="room-name" data-testid="text-room-name">Loading...</h2>
                 <div style="font-size: 0.75rem; color: var(--text-secondary);">
                     <span class="badge badge-success">🔒 AES-256 ENCRYPTED</span>
                 </div>
             </div>
-            <button class="btn btn-danger" onclick="leaveRoom()">LEAVE</button>
+            <button class="btn btn-danger" onclick="leaveRoom()" data-testid="button-leave-room">LEAVE</button>
         </div>
         
-        <div class="messages" id="messages">
+        <div class="messages" id="messages" data-testid="container-messages">
             <div style="text-align: center; color: var(--text-tertiary); font-size: 0.85rem;">
                 No messages yet. Start the conversation!
             </div>
@@ -276,7 +276,7 @@
         
         <div class="message-input-area">
             <div style="display: flex; gap: 0.5rem; margin-bottom: 0.5rem;">
-                <select class="input" id="ttl-select" style="width: auto; margin-bottom: 0;">
+                <select class="input" id="ttl-select" style="width: auto; margin-bottom: 0;" data-testid="select-ttl">
                     <option value="0">No self-destruct</option>
                     <option value="5">🔥 5 seconds</option>
                     <option value="30">🔥 30 seconds</option>
@@ -284,9 +284,9 @@
                     <option value="300">🔥 5 minutes</option>
                     <option value="1800">🔥 30 minutes</option>
                 </select>
-                <label class="input" style="margin-bottom: 0; cursor: pointer; display: flex; align-items: center; gap: 0.5rem; width: auto; padding: 0.5rem 1rem;">
+                <label class="input" style="margin-bottom: 0; cursor: pointer; display: flex; align-items: center; gap: 0.5rem; width: auto; padding: 0.5rem 1rem;" data-testid="button-file-upload">
                     📎 Share File
-                    <input type="file" id="file-input" style="display: none;" onchange="handleFileSelect(event)">
+                    <input type="file" id="file-input" style="display: none;" onchange="handleFileSelect(event)" data-testid="input-file">
                 </label>
             </div>
             
@@ -296,8 +296,9 @@
                     class="input message-input" 
                     placeholder="Type your message... (Enter to send, Shift+Enter for new line)"
                     onkeydown="handleMessageKeydown(event)"
+                    data-testid="input-message"
                 ></textarea>
-                <button class="btn btn-primary" onclick="sendMessage()" style="height: 60px;">
+                <button class="btn btn-primary" onclick="sendMessage()" style="height: 60px;" data-testid="button-send">
                     SEND
                 </button>
             </div>
@@ -307,23 +308,23 @@
     <!-- Right Sidebar - Active Users -->
     <div class="sidebar">
         <h3 style="color: var(--accent-cyan); margin-bottom: 1rem;">
-            ACTIVE USERS (<span id="user-count">0</span>)
+            ACTIVE USERS (<span id="user-count" data-testid="text-user-count">0</span>)
         </h3>
         
-        <div id="users-list"></div>
+        <div id="users-list" data-testid="container-users"></div>
         
         <div style="margin-top: 2rem;">
             <h4 style="color: var(--accent-cyan); margin-bottom: 0.5rem; font-size: 0.9rem;">WebRTC P2P</h4>
             <p style="font-size: 0.75rem; color: var(--text-tertiary); margin-bottom: 0.75rem;">
                 Direct encrypted connection
             </p>
-            <div id="webrtc-users"></div>
+            <div id="webrtc-users" data-testid="container-webrtc-users"></div>
         </div>
     </div>
 </div>
 
 <!-- Change Passphrase Modal -->
-<div id="passphrase-modal" class="modal">
+<div id="passphrase-modal" class="modal" data-testid="modal-change-passphrase">
     <div class="modal-content">
         <h2 style="color: var(--accent-red); margin-bottom: 1rem;">⚠️ Change Room Passphrase</h2>
         <p style="color: var(--text-secondary); margin-bottom: 1.5rem; font-size: 0.85rem;">
@@ -331,16 +332,16 @@
         </p>
         
         <label class="label">New Passphrase</label>
-        <input type="password" id="new-passphrase" class="input" placeholder="Min 6 characters" minlength="6">
+        <input type="password" id="new-passphrase" class="input" placeholder="Min 6 characters" minlength="6" data-testid="input-new-passphrase">
         
         <label class="label">Confirm Passphrase</label>
-        <input type="password" id="confirm-passphrase" class="input" placeholder="Re-enter passphrase" minlength="6">
+        <input type="password" id="confirm-passphrase" class="input" placeholder="Re-enter passphrase" minlength="6" data-testid="input-confirm-passphrase">
         
         <div style="display: flex; gap: 0.5rem; margin-top: 1.5rem;">
-            <button class="btn btn-secondary" onclick="closePassphraseModal()" style="flex: 1;">
+            <button class="btn btn-secondary" onclick="closePassphraseModal()" style="flex: 1;" data-testid="button-cancel-passphrase">
                 Cancel
             </button>
-            <button class="btn btn-danger" onclick="changePassphrase()" style="flex: 1;">
+            <button class="btn btn-danger" onclick="changePassphrase()" style="flex: 1;" data-testid="button-confirm-passphrase">
                 Change Passphrase
             </button>
         </div>

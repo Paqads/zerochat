@@ -18,31 +18,31 @@
     <div style="max-width: 600px; margin: 0 auto;">
         <div class="card">
             <div style="display: flex; gap: 1rem; margin-bottom: 2rem; border-bottom: 1px solid var(--border);">
-                <button class="tab-btn active" data-tab="create">CREATE ROOM</button>
-                <button class="tab-btn" data-tab="join">JOIN ROOM</button>
+                <button class="tab-btn active" data-tab="create" data-testid="button-create-tab">CREATE ROOM</button>
+                <button class="tab-btn" data-tab="join" data-testid="button-join-tab">JOIN ROOM</button>
             </div>
 
             <!-- Create Room Tab -->
             <div id="create-tab" class="tab-content active">
                 <form id="create-form">
                     <label class="label">Room Name</label>
-                    <input type="text" class="input" id="create-room-name" placeholder="My Secure Room" required>
+                    <input type="text" class="input" id="create-room-name" placeholder="My Secure Room" required data-testid="input-create-room-name">
                     
                     <label class="label">Your Username</label>
-                    <input type="text" class="input" id="create-username" placeholder="hacker01" required>
+                    <input type="text" class="input" id="create-username" placeholder="hacker01" required data-testid="input-create-username">
                     
                     <label class="label">Room Passphrase</label>
-                    <input type="password" class="input" id="create-passphrase" placeholder="Min 6 characters" required minlength="6">
+                    <input type="password" class="input" id="create-passphrase" placeholder="Min 6 characters" required minlength="6" data-testid="input-create-passphrase">
                     <p style="font-size: 0.75rem; color: var(--text-tertiary); margin-bottom: 1rem;">Share this passphrase with trusted users only</p>
                     
                     <label class="label">Storage Mode</label>
-                    <select class="input" id="storage-mode">
+                    <select class="input" id="storage-mode" data-testid="select-storage-mode">
                         <option value="ephemeral">Ephemeral (In-Memory Only)</option>
                         <option value="persistent">Persistent (Encrypted Database)</option>
                     </select>
                     <p style="font-size: 0.75rem; color: var(--text-tertiary); margin-bottom: 1rem;">Persistent mode saves encrypted messages to database</p>
                     
-                    <button type="submit" class="btn btn-primary" style="width: 100%;">
+                    <button type="submit" class="btn btn-primary" style="width: 100%;" data-testid="button-create-room">
                         + CREATE SECURE ROOM
                     </button>
                 </form>
@@ -52,15 +52,15 @@
             <div id="join-tab" class="tab-content">
                 <form id="join-form">
                     <label class="label">Room ID</label>
-                    <input type="text" class="input" id="join-room-id" placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx" required>
+                    <input type="text" class="input" id="join-room-id" placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx" required data-testid="input-join-room-id">
                     
                     <label class="label">Your Username</label>
-                    <input type="text" class="input" id="join-username" placeholder="hacker01" required>
+                    <input type="text" class="input" id="join-username" placeholder="hacker01" required data-testid="input-join-username">
                     
                     <label class="label">Room Passphrase</label>
-                    <input type="password" class="input" id="join-passphrase" placeholder="Enter passphrase" required>
+                    <input type="password" class="input" id="join-passphrase" placeholder="Enter passphrase" required data-testid="input-join-passphrase">
                     
-                    <button type="submit" class="btn btn-primary" style="width: 100%;">
+                    <button type="submit" class="btn btn-primary" style="width: 100%;" data-testid="button-join-room">
                         → JOIN ROOM
                     </button>
                 </form>
