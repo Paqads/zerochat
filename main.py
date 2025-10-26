@@ -46,5 +46,6 @@ async def chat(request: Request):
 socket_app = socketio.ASGIApp(sio, app, socketio_path='/socket.io')
 
 if __name__ == "__main__":
-    port = int(os.environ.get("PORT", 5000))
+    port = int(os.environ.get("PORT", 8000))
+    print(f"🚀 Starting ZeroChat server on http://0.0.0.0:{port}")
     uvicorn.run(socket_app, host="0.0.0.0", port=port, log_level="info")
