@@ -178,7 +178,7 @@ See `design_guidelines.md` for comprehensive UI/UX specifications including:
 5. Share Room ID and passphrase with trusted users
 
 ### Joining a Room
-1. Obtain Room ID and passphrase from room creator
+1. Obtain Room ID and passphrase from room creator.
 2. Enter Room ID, username, and passphrase
 3. Click "JOIN ROOM"
 4. Server validates passphrase
