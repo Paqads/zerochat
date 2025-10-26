@@ -1,0 +1,150 @@
+{% extends "base.html" %}
+
+{% block title %}ZeroChat - Secure Room Entry{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="header">
+        <div class="logo">🔐 ZEROCHAT</div>
+        <div class="tagline">Hacker-grade encrypted messaging</div>
+        <div style="margin-top: 1rem;">
+            <span class="badge badge-success">🔒 E2E AES-256 Encryption</span>
+            <span class="badge badge-info">⚡ No Database</span>
+            <span class="badge badge-info">👻 Ephemeral</span>
+            <span class="badge badge-success">✅ Self-Destruct</span>
+        </div>
+    </div>
+
+    <div style="max-width: 600px; margin: 0 auto;">
+        <div class="card">
+            <div style="display: flex; gap: 1rem; margin-bottom: 2rem; border-bottom: 1px solid var(--border);">
+                <button class="tab-btn active" data-tab="create">CREATE ROOM</button>
+                <button class="tab-btn" data-tab="join">JOIN ROOM</button>
+            </div>
+
+            <!-- Create Room Tab -->
+            <div id="create-tab" class="tab-content active">
+                <form id="create-form">
+                    <label class="label">Room Name</label>
+                    <input type="text" class="input" id="create-room-name" placeholder="My Secure Room" required>
+                    
+                    <label class="label">Your Username</label>
+                    <input type="text" class="input" id="create-username" placeholder="hacker01" required>
+                    
+                    <label class="label">Room Passphrase</label>
+                    <input type="password" class="input" id="create-passphrase" placeholder="Min 6 characters" required minlength="6">
+                    <p style="font-size: 0.75rem; color: var(--text-tertiary); margin-bottom: 1rem;">Share this passphrase with trusted users only</p>
+                    
+                    <label class="label">Storage Mode</label>
+                    <select class="input" id="storage-mode">
+                        <option value="ephemeral">Ephemeral (In-Memory Only)</option>
+                        <option value="persistent">Persistent (Encrypted Database)</option>
+                    </select>
+                    <p style="font-size: 0.75rem; color: var(--text-tertiary); margin-bottom: 1rem;">Persistent mode saves encrypted messages to database</p>
+                    
+                    <button type="submit" class="btn btn-primary" style="width: 100%;">
+                        + CREATE SECURE ROOM
+                    </button>
+                </form>
+            </div>
+
+            <!-- Join Room Tab -->
+            <div id="join-tab" class="tab-content">
+                <form id="join-form">
+                    <label class="label">Room ID</label>
+                    <input type="text" class="input" id="join-room-id" placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx" required>
+                    
+                    <label class="label">Your Username</label>
+                    <input type="text" class="input" id="join-username" placeholder="hacker01" required>
+                    
+                    <label class="label">Room Passphrase</label>
+                    <input type="password" class="input" id="join-passphrase" placeholder="Enter passphrase" required>
+                    
+                    <button type="submit" class="btn btn-primary" style="width: 100%;">
+                        → JOIN ROOM
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <div class="card">
+            <h3 style="color: var(--accent-green); margin-bottom: 1rem;">🛡️ Security Features</h3>
+            <ul style="list-style: none; font-size: 0.85rem; color: var(--text-secondary);">
+                <li style="margin-bottom: 0.5rem;">✓ Client-side AES-256-GCM encryption</li>
+                <li style="margin-bottom: 0.5rem;">✓ Ed25519 digital signatures for message verification</li>
+                <li style="margin-bottom: 0.5rem;">✓ Self-destructing messages with timers</li>
+                <li style="margin-bottom: 0.5rem;">✓ WebRTC peer-to-peer direct messaging</li>
+                <li style="margin-bottom: 0.5rem;">✓ Encrypted file sharing</li>
+                <li style="margin-bottom: 0.5rem;">✓ Optional persistent encrypted storage</li>
+                <li style="margin-bottom: 0.5rem;">✓ Passphrase rotation (clears history)</li>
+            </ul>
+        </div>
+    </div>
+</div>
+
+<div id="toast-container" style="position: fixed; top: 1rem; right: 1rem; z-index: 1000;"></div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .tab-btn {
+        flex: 1;
+        padding: 0.75rem;
+        background: transparent;
+        border: none;
+        border-bottom: 2px solid transparent;
+        color: var(--text-secondary);
+        font-family: var(--font-mono);
+        font-size: 0.85rem;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+    
+    .tab-btn.active {
+        color: var(--accent-green);
+        border-bottom-color: var(--accent-green);
+    }
+    
+    .tab-content {
+        display: none;
+    }
+    
+    .tab-content.active {
+        display: block;
+    }
+    
+    .toast {
+        background: var(--bg-tertiary);
+        border: 1px solid var(--border);
+        border-radius: 4px;
+        padding: 1rem;
+        margin-bottom: 0.5rem;
+        min-width: 300px;
+        animation: slideIn 0.3s ease;
+    }
+    
+    @keyframes slideIn {
+        from {
+            transform: translateX(100%);
+            opacity: 0;
+        }
+        to {
+            transform: translateX(0);
+            opacity: 1;
+        }
+    }
+    
+    .toast.error {
+        border-color: var(--accent-red);
+    }
+    
+    .toast.success {
+        border-color: var(--accent-green);
+    }
+</style>
+{% endblock %}
+
+{% block scripts %}
+<script src="/static/js/crypto.js"></script>
+<script src="/static/js/index.js"></script>
+{% endblock %}
