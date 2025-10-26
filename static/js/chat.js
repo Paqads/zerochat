@@ -8,6 +8,7 @@ let peerConnections = {};
 let passphraseChanging = false;
 let typingTimeout;
 let typingUsers = new Set();
+let lastTypingEmit = 0;
 
 // Initialize on page load
 document.addEventListener('DOMContentLoaded', async () => {
@@ -111,12 +112,12 @@ function connectWebSocket() {
     
     socket.on('user_joined', (data) => {
         if (passphraseChanging) return;
-        addSystemMessage(`→ ${data.username} joined the room`);
+        addSystemMessage(`>> ${data.username} joined the room`);
     });
     
     socket.on('user_left', (data) => {
         if (passphraseChanging) return;
-        addSystemMessage(`← ${data.username} left the room`);
+        addSystemMessage(`<< ${data.username} left the room`);
     });
     
     socket.on('user_list_update', (data) => {
@@ -238,6 +239,13 @@ function displayMessage(msg) {
     `;
     
     container.appendChild(messageDiv);
+    
+    // Move typing indicator to bottom if it exists
+    const typingIndicator = document.getElementById('typing-indicator');
+    if (typingIndicator) {
+        container.appendChild(typingIndicator);
+    }
+    
     container.scrollTop = container.scrollHeight;
     
     // Update timer
@@ -296,6 +304,14 @@ function updateTypingIndicator() {
 }
 
 function handleTypingIndicator() {
+    const now = Date.now();
+    
+    // Throttle: only emit once every 500ms
+    if (now - lastTypingEmit < 500) {
+        return;
+    }
+    
+    lastTypingEmit = now;
     clearTimeout(typingTimeout);
     socket.emit('typing', { roomId: session.roomId, userId: session.userId });
     typingTimeout = setTimeout(() => {}, 3000);
