@@ -6,6 +6,8 @@ let messages = [];
 let users = [];
 let peerConnections = {};
 let passphraseChanging = false;
+let typingTimeout;
+let typingUsers = new Set();
 
 // Initialize on page load
 document.addEventListener('DOMContentLoaded', async () => {
@@ -37,7 +39,21 @@ document.addEventListener('DOMContentLoaded', async () => {
     
     // Connect to WebSocket
     connectWebSocket();
+    
+    // Set up typing indicator
+    const messageInput = document.getElementById('message-input');
+    messageInput.addEventListener('input', handleTypingIndicator);
+    
+    // Update relative timestamps every minute
+    setInterval(updateRelativeTimestamps, 60000);
 });
+
+function updateRelativeTimestamps() {
+    document.querySelectorAll('.relative-time').forEach(el => {
+        const timestamp = parseInt(el.dataset.timestamp);
+        el.textContent = formatRelativeTime(timestamp);
+    });
+}
 
 function connectWebSocket() {
     socket = io({
@@ -108,6 +124,19 @@ function connectWebSocket() {
         updateUsersList();
     });
     
+    socket.on('user_typing', (data) => {
+        if (data.userId !== session.userId) {
+            typingUsers.add(data.username);
+            updateTypingIndicator();
+            
+            // Remove after 3 seconds
+            setTimeout(() => {
+                typingUsers.delete(data.username);
+                updateTypingIndicator();
+            }, 3000);
+        }
+    });
+    
     socket.on('clear_history', () => {
         messages = [];
         document.getElementById('messages').innerHTML = '<div style="text-align: center; color: var(--text-tertiary); font-size: 0.85rem;">No messages yet. Start the conversation!</div>';
@@ -150,6 +179,9 @@ async function sendMessage() {
     
     if (!content) return;
     
+    // Clear typing indicator
+    typingUsers.delete(session.username);
+    
     const encrypted = await cryptoManager.encryptMessage(content, session.passphrase);
     const signature = await cryptoManager.signMessage(encrypted);
     const ttl = parseInt(document.getElementById('ttl-select').value);
@@ -187,13 +219,16 @@ function displayMessage(msg) {
     const messageDiv = document.createElement('div');
     messageDiv.className = `message ${msg.userId === session.userId ? 'own' : ''}${msg.isSystem ? ' system' : ''}`;
     messageDiv.id = `msg-${msg.id}`;
+    messageDiv.dataset.timestamp = msg.timestamp;
     
-    const timestamp = new Date(msg.timestamp).toLocaleTimeString();
+    const relativeTime = formatRelativeTime(msg.timestamp);
     const timeLeft = msg.ttl ? formatTimeLeft(msg.ttl) : '';
     
     messageDiv.innerHTML = `
         <div class="message-header">
-            <span style="color: var(--text-secondary);">${msg.username} · ${timestamp}</span>
+            <span style="color: var(--text-secondary);">
+                ${msg.username} · <span class="relative-time" data-timestamp="${msg.timestamp}">${relativeTime}</span>
+            </span>
             <span style="display: flex; gap: 0.25rem; align-items: center;">
                 ${msg.verified ? '<span class="verified-badge">✓ VERIFIED</span>' : ''}
                 ${msg.ttl ? `<span class="timer-badge" id="timer-${msg.id}">🔥 ${timeLeft}</span>` : ''}
@@ -209,6 +244,61 @@ function displayMessage(msg) {
     if (msg.ttl) {
         startMessageTimer(msg.id, msg.ttl);
     }
+}
+
+function formatRelativeTime(timestamp) {
+    const now = Date.now();
+    const diff = now - timestamp;
+    const seconds = Math.floor(diff / 1000);
+    const minutes = Math.floor(seconds / 60);
+    const hours = Math.floor(minutes / 60);
+    const days = Math.floor(hours / 24);
+    
+    if (seconds < 10) return 'just now';
+    if (seconds < 60) return `${seconds}s ago`;
+    if (minutes < 60) return `${minutes}m ago`;
+    if (hours < 24) return `${hours}h ago`;
+    if (days === 1) return 'yesterday';
+    if (days < 7) return `${days}d ago`;
+    return new Date(timestamp).toLocaleDateString();
+}
+
+function updateTypingIndicator() {
+    const container = document.getElementById('messages');
+    let indicator = document.getElementById('typing-indicator');
+    
+    if (typingUsers.size > 0) {
+        const names = Array.from(typingUsers).slice(0, 3).join(', ');
+        const text = typingUsers.size === 1 
+            ? `${names} is typing...` 
+            : `${names} ${typingUsers.size > 3 ? `+${typingUsers.size - 3} more ` : ''}are typing...`;
+        
+        if (!indicator) {
+            indicator = document.createElement('div');
+            indicator.id = 'typing-indicator';
+            indicator.className = 'typing-indicator';
+            indicator.innerHTML = `
+                <div style="color: var(--accent-cyan); font-size: 0.8rem; font-style: italic; padding: 0.5rem 1rem; display: flex; align-items: center; gap: 0.5rem;">
+                    <div class="typing-dots">
+                        <span></span><span></span><span></span>
+                    </div>
+                    <span id="typing-text">${text}</span>
+                </div>
+            `;
+            container.appendChild(indicator);
+        } else {
+            document.getElementById('typing-text').textContent = text;
+        }
+        container.scrollTop = container.scrollHeight;
+    } else if (indicator) {
+        indicator.remove();
+    }
+}
+
+function handleTypingIndicator() {
+    clearTimeout(typingTimeout);
+    socket.emit('typing', { roomId: session.roomId, userId: session.userId });
+    typingTimeout = setTimeout(() => {}, 3000);
 }
 
 function startMessageTimer(messageId, ttl) {

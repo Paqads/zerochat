@@ -242,6 +242,18 @@ async def share_file(sid, data):
     await sio.emit('file_shared', file_share, room=room_id)
 
 @sio.event
+async def typing(sid, data):
+    room_id = data.get('roomId')
+    user_id = data.get('userId')
+    
+    user = memory_storage.get_user(user_id)
+    if user and user.get('room_id') == room_id:
+        await sio.emit('user_typing', {
+            'userId': user_id,
+            'username': user['username']
+        }, room=room_id, skip_sid=sid)
+
+@sio.event
 async def webrtc_signal(sid, data):
     target_user_id = data.get('targetUserId')
     signal_type = data.get('type')
