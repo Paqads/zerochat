@@ -4,24 +4,36 @@
 A hacker-grade secure chat application with password-protected rooms, client-side AES-256 encryption, and real-time WebSocket communication. Features ephemeral messaging with no persistent storage for maximum security.
 
 ## Tech Stack
-- **Frontend**: React + TypeScript, Wouter (routing), TanStack Query, Tailwind CSS, shadcn/ui
-- **Backend**: Express.js, WebSocket (ws), In-memory storage
-- **Encryption**: CryptoJS (AES-256 client-side encryption)
+- **Frontend**: Vanilla JavaScript, Jinja2 templates, Socket.IO client
+- **Backend**: Python FastAPI, python-socketio, In-memory storage
+- **Encryption**: Web Crypto API (AES-256-GCM), Ed25519 signatures
+- **Database**: Optional PostgreSQL (Neon) with dual-mode (in-memory or persistent)
 - **Design**: Terminal/hacker aesthetic with monospace fonts, green/cyan accents
 
 ## Features
 - ✅ Password-protected chat rooms
-- ✅ Real-time WebSocket communication
-- ✅ Client-side AES-256 message encryption
-- ✅ Secure room creation via API (server generates room IDs)
+- ✅ Real-time WebSocket communication (Socket.IO)
+- ✅ Client-side AES-256-GCM message encryption
+- ✅ Ed25519 digital signatures for message authenticity
+- ✅ Server-side signature verification (prevents spoofing)
+- ✅ Secure room creation via API (server generates UUID room IDs)
 - ✅ Passphrase validation before joining
 - ✅ Dynamic passphrase changing (admin only, clears message history)
+- ✅ Self-destructing messages with configurable timers (10s to 24h)
 - ✅ Active user presence indicators
+- ✅ **NEW: Relative timestamps** ("just now", "2m ago", auto-updating)
+- ✅ **NEW: Typing indicators** with animated dots
+- ✅ **NEW: Throttled typing events** (500ms) to reduce network traffic
 - ✅ Ephemeral messages (in-memory only, cleared on passphrase change)
 - ✅ Copy-to-clipboard for room ID and passphrase
-- ✅ Connection status indicators
+- ✅ User fingerprint display (Ed25519 public key hash)
+- ✅ WebRTC peer-to-peer support (experimental)
+- ✅ Encrypted file sharing (up to 10MB)
+- ✅ Connection status indicators with pulse animations
 - ✅ Responsive design (mobile, tablet, desktop)
 - ✅ Secure credential storage (sessionStorage, never in URLs)
+- ✅ Comprehensive data-testid attributes for E2E testing
+- ✅ Dual storage mode (in-memory ephemeral OR encrypted PostgreSQL persistence)
 
 ## Security Model
 
@@ -71,10 +83,17 @@ These tradeoffs favor simplicity and user experience for an MVP ephemeral chat s
 - `leave_room`: User leaves a room
 - `send_message`: Send encrypted message to room
 - `message_broadcast`: Broadcast message to all room users
+- `typing`: User is typing (throttled to 500ms, broadcasts to others)
+- `user_typing`: Notification that another user is typing
 - `user_joined`: Notify when user joins
 - `user_left`: Notify when user leaves
 - `user_list_update`: Update active users list
+- `share_file`: Share encrypted file with room
+- `file_shared`: Broadcast shared file to all room users
+- `webrtc_signal`: WebRTC peer signaling for P2P connections
 - `passphrase_changed`: Admin changed room passphrase (history cleared)
+- `clear_history`: Clear message history (on passphrase change)
+- `expire_message`: Self-destruct message after TTL expires
 - `error`: Error messages (with fatal flag for disconnection)
 
 ### Security Flow
@@ -106,33 +125,38 @@ These tradeoffs favor simplicity and user experience for an MVP ephemeral chat s
 
 ## Project Structure
 ```
-client/
-├── src/
-│   ├── components/
-│   │   ├── connection-status.tsx    # Connection indicator
-│   │   ├── encryption-badge.tsx     # AES-256 badge
-│   │   ├── message-input.tsx        # Message input area
-│   │   ├── message-list.tsx         # Message display
-│   │   ├── passphrase-modal.tsx     # Change passphrase modal
-│   │   └── user-list.tsx            # Active users sidebar
-│   ├── hooks/
-│   │   └── use-websocket.ts         # WebSocket connection hook
-│   ├── lib/
-│   │   ├── crypto.ts                # AES-256 encryption utilities
-│   │   └── queryClient.ts           # API request utilities
-│   ├── pages/
-│   │   ├── room-selector.tsx        # Landing page (create/join room)
-│   │   └── chat-room.tsx            # Main chat interface
-│   └── App.tsx                      # Main app with routing
-server/
-├── routes.ts                        # API + WebSocket server
-└── storage.ts                       # In-memory storage
-shared/
-└── schema.ts                        # TypeScript schemas and types
+app/
+├── main.py                          # FastAPI application entry
+├── models.py                        # Pydantic data models
+├── storage.py                       # In-memory & PostgreSQL storage
+├── crypto_utils.py                  # Ed25519 signature verification
+└── routes/
+    ├── rooms.py                     # Room creation/verification API
+    └── websocket.py                 # Socket.IO WebSocket handlers
+templates/
+├── base.html                        # Base template with CSS + animations
+├── index.html                       # Landing page (create/join room)
+└── chat.html                        # Chat room interface
+static/
+├── js/
+│   ├── crypto.js                    # Web Crypto API (AES-256-GCM, Ed25519)
+│   └── chat.js                      # Chat logic, WebSocket, typing indicators
+└── css/
+    └── (empty - styles in base.html)
 ```
 
 ## Running the Application
-The app automatically starts with `npm run dev` which runs both Express backend and Vite frontend on the same port.
+**Current Setup**: The project template is Node.js/React but the Python FastAPI server is fully implemented.
+
+**To run the Python server**:
+```bash
+python main.py
+```
+Server runs on port 8000 (http://localhost:8000)
+
+**Note**: To permanently switch the workflow, manually edit `.replit`:
+- Line 2: Change to `run = "python main.py"`
+- Line 43: Change to `command = "python main.py"`
 
 ## Design Guidelines
 See `design_guidelines.md` for comprehensive UI/UX specifications including:
@@ -178,12 +202,34 @@ See `design_guidelines.md` for comprehensive UI/UX specifications including:
 8. Share new passphrase with trusted users
 
 ## Recent Changes
-- Initial implementation (Oct 26, 2025)
-  - Complete schema definition with secure types
-  - All frontend components with terminal aesthetic
-  - WebSocket hook and AES-256 crypto utilities
-  - Room selector and chat room pages
-  - Design tokens and animations
+- **Oct 26, 2025 - Quality of Life Enhancements**:
+  - ✅ **Relative timestamps**: Messages show "just now", "2m ago", "1h ago" instead of absolute times
+  - ✅ **Auto-updating timestamps**: Refresh every 60 seconds to stay current
+  - ✅ **Typing indicators**: Real-time "[username] is typing..." with animated cyan dots
+  - ✅ **Throttled typing events**: Only emit once per 500ms to reduce network traffic
+  - ✅ **Improved indicator positioning**: Typing indicator always anchors below latest message
+  - ✅ **Enhanced animations**: CSS keyframes for smooth typing dot bounces
+
+- **Oct 26, 2025 - Testing Infrastructure**:
+  - ✅ Added comprehensive `data-testid` attributes to all interactive elements
+  - ✅ E2E test coverage verified: room creation, joining, messaging, encryption, signatures
+  - ✅ Python server fully functional and tested on port 8000
+
+- **Oct 26, 2025 - Security Fixes** (6 rounds):
+  - ✅ Fixed ORM field mappings (storage_mode enum handling)
+  - ✅ Removed duplicate Room insert operations
+  - ✅ Implemented server-side Ed25519 signature verification
+  - ✅ Enforced userId uniqueness constraints
+  - ✅ Fixed Unicode arrow characters in JavaScript (>> / <<)
+
+- **Initial Implementation** (Oct 26, 2025):
+  - Complete Python FastAPI backend with Socket.IO
+  - Client-side AES-256-GCM encryption + Ed25519 signatures
+  - Self-destructing messages with configurable TTL
+  - WebRTC peer-to-peer support
+  - Encrypted file sharing (up to 10MB)
+  - Dual storage mode (ephemeral in-memory OR encrypted PostgreSQL)
+  - Terminal/hacker aesthetic design
   - **Security improvements:**
     - Passphrases removed from URLs (use sessionStorage)
     - Server-side room ID generation (UUID)
